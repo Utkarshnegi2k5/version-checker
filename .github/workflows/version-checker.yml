@@ -2,8 +2,7 @@ name: Version checker
 
 on:
   schedule:
-    - cron: '* * * * *'
-
+    - cron: '*/5 * * * *'
 
 jobs:
   check-version:
