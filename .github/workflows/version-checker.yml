@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Version Checker
+      - name: Checkout Repo
         uses: actions/checkout@v4
 
       - name: Checkout Repo-A
@@ -18,14 +18,15 @@ jobs:
         with:
           repository: Utkarshnegi2k5/Repo-A
           token: ${{ secrets.VERSION_TOKEN }}
-          path: Repo-A
+          path: ../Repo-A
 
-      - name: Setup Node.js
+      - name: Setup NodeJs
         uses: actions/setup-node@v4
         with:
           node-version: 24
 
-      - name: Run Version Checker
+      - name: Run version checker
         env:
-          GITHUB_TOKEN: ${{ secrets.VERSION_TOKEN }}
+          GITHUB_TOKEN: ${{secrets.VERSION_TOKEN}}
+        
         run: node version-checker.js

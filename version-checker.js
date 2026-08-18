@@ -1,29 +1,15 @@
 const fs = require("fs");
 const path = require("path");
-const { execFileSync } = require("child_process");
+const { execSync } = require("child_process");
 
 const owner = "Utkarshnegi2k5";
 
-const repoAName = "Repo-A";
-const repoBName = "Repo-B";
-
-const dependencyName = "repo-b";
-
-const token = process.env.GITHUB_TOKEN;
-
-if (!token) {
-    throw new Error("GITHUB_TOKEN is not set");
-}
-
-
 async function GetFileFromGithub(owner, repo, filePath) {
-
-    const url =
-        `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`;
+    const url = `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`;
 
     const response = await fetch(url, {
         headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${process.env.VERSION_TOKEN}`,
             Accept: "application/vnd.github+json"
         }
     });
@@ -44,333 +30,123 @@ async function GetFileFromGithub(owner, repo, filePath) {
 }
 
 
-async function CreatePullRequest(owner, repo, branchName, version) {
-
-    const url =
-        `https://api.github.com/repos/${owner}/${repo}/pulls`;
-
-    const response = await fetch(url, {
-
-        method: "POST",
-
-        headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: "application/vnd.github+json",
-            "Content-Type": "application/json"
-        },
-
-        body: JSON.stringify({
-            title: `Update ${dependencyName} to ${version}`,
-            head: branchName,
-            base: "main",
-            body:
-                `This PR was automatically created by the version checker.\n\n` +
-                `Updated **${dependencyName}** to version **${version}**.`
-        })
-    });
-
-
-    if (!response.ok) {
-
-        const errorBody = await response.text();
-
-        throw new Error(
-            `PR creation failed: ${response.status} ${errorBody}`
-        );
-    }
-
-
-    const pullRequest = await response.json();
-
-    console.log(`Pull Request created: ${pullRequest.html_url}`);
-}
-
-
-// --------------------------------------------------
-// Main
-// --------------------------------------------------
-
 async function main() {
 
-    console.log("Starting version checker...");
+    const repoApath = "package.json";
+    const repoBpath = "package.json";
 
 
-    // --------------------------------------------------
-    // 1. Get Repo-A package.json
-    // --------------------------------------------------
+    // Get Repo-A package.json
 
     const repoA = await GetFileFromGithub(
         owner,
-        repoAName,
-        "package.json"
+        "Repo-A",
+        repoApath
     );
 
+    console.log("Repo-A package.json:");
+    console.log(repoA);
 
-    // --------------------------------------------------
-    // 2. Get Repo-B package.json
-    // --------------------------------------------------
+
+    // Get Repo-B package.json
 
     const repoB = await GetFileFromGithub(
         owner,
-        repoBName,
-        "package.json"
+        "Repo-B",
+        repoBpath
     );
 
-
-    // --------------------------------------------------
-    // 3. Read versions
-    // --------------------------------------------------
-
-    const repoAVersion =
-        repoA.dependencies[dependencyName];
-
-    const repoBVersion =
-        repoB.version;
+    console.log("Repo-B package.json:");
+    console.log(repoB);
 
 
-    console.log(
-        `Repo-A requires ${dependencyName}: ${repoAVersion}`
-    );
+    // Version comparison
 
-    console.log(
-        `Repo-B current version: ${repoBVersion}`
-    );
+    const repoAVersion = repoA.dependencies["repo-b"];
+    const repoBVersion = repoB.version;
 
-
-    // --------------------------------------------------
-    // 4. Compare versions
-    // --------------------------------------------------
-
-    if (repoAVersion === repoBVersion) {
-
-        console.log("There is no version mismatch.");
-        console.log("Nothing to do.");
-
-        return;
-    }
+    console.log(`Repo-A requires Repo-B: ${repoAVersion}`);
+    console.log(`Repo-B current version: ${repoBVersion}`);
 
 
-    console.log("!!! There is a version mismatch !!!");
+    // Check version mismatch
+
+    if (repoAVersion !== repoBVersion) {
+
+        console.log("!!! There is a version mismatch !!!");
 
 
-    // --------------------------------------------------
-    // 5. Clone Repo-A
-    // --------------------------------------------------
+        // Repo-A location on GitHub Actions runner
 
-    const repoAPath =
-        path.join(process.cwd(), repoAName);
-
-
-    // Remove Repo-A if it already exists
-    // This makes local testing easier.
-
-    if (fs.existsSync(repoAPath)) {
-
-        fs.rmSync(repoAPath, {
-            recursive: true,
-            force: true
-        });
-    }
+        const repoAPath = path.join(
+            process.cwd(),
+            "..",
+            "Repo-A"
+        );
 
 
-    console.log("Cloning Repo-A...");
+        // package.json inside Repo-A
 
-
-    execFileSync(
-        "git",
-        [
-            "-c",
-            `http.extraheader=AUTHORIZATION: bearer ${token}`,
-            "clone",
-            `https://github.com/${owner}/${repoAName}.git`,
-            repoAPath
-        ],
-        {
-            stdio: "inherit"
-        }
-    );
-
-
-    // --------------------------------------------------
-    // 6. Create branch
-    // --------------------------------------------------
-
-    const branchName =
-        `update-${dependencyName}-${repoBVersion}`;
-    console.log(`Creating branch: ${branchName}`);
-
-    execFileSync(
-        "git",
-        [
-            "-C",
+        const packagePath = path.join(
             repoAPath,
-            "checkout",
-            "-b",
-            branchName
-        ],
-        {
-            stdio: "inherit"
-        }
-    );
+            "package.json"
+        );
 
 
-    // --------------------------------------------------
-    // 7. Read local package.json
-    // --------------------------------------------------
+        // Read Repo-A package.json
 
-    const packagePath =
-        path.join(repoAPath, "package.json");
-
-
-    const packageJson =
-        JSON.parse(
+        const packageJson = JSON.parse(
             fs.readFileSync(packagePath, "utf8")
         );
 
 
-    // --------------------------------------------------
-    // 8. Update dependency version
-    // --------------------------------------------------
+        // Update dependency
 
-    packageJson.dependencies[dependencyName] =
-        repoBVersion;
+        packageJson.dependencies["repo-b"] = repoBVersion;
 
 
-    fs.writeFileSync(
-        packagePath,
-        JSON.stringify(packageJson, null, 2) + "\n"
-    );
+        // Write updated package.json
+
+        fs.writeFileSync(
+            packagePath,
+            JSON.stringify(packageJson, null, 2) + "\n"
+        );
+
+        console.log(
+            `Updated repo-b from ${repoAVersion} to ${repoBVersion}`
+        );
 
 
-    console.log(
-        `Updated ${dependencyName} from ${repoAVersion} to ${repoBVersion}`
-    );
+        // Create branch
+
+        const branchName =
+            `update-repo-b-${repoBVersion}`;
 
 
-    // --------------------------------------------------
-    // 9. Configure Git user
-    // --------------------------------------------------
+        execSync(
+            `git -C "${repoAPath}" checkout -b "${branchName}"`,
+            {
+                stdio: "inherit"
+            }
+        );
 
-    execFileSync(
-        "git",
-        [
-            "-C",
-            repoAPath,
-            "config",
-            "user.name",
-            "github-actions[bot]"
-        ],
-        {
-            stdio: "inherit"
-        }
-    );
+        console.log(
+            `Created branch: ${branchName}`
+        );
 
 
-    execFileSync(
-        "git",
-        [
-            "-C",
-            repoAPath,
-            "config",
-            "user.email",
-            "41898282+github-actions[bot]@users.noreply.github.com"
-        ],
-        {
-            stdio: "inherit"
-        }
-    );
+    } else {
 
-    // --------------------------------------------------
-    // 10. Add package.json
-    // --------------------------------------------------
+        console.log("There is no version mismatch");
 
-    execFileSync(
-        "git",
-        [
-            "-C",
-            repoAPath,
-            "add",
-            "package.json"
-        ],
-        {
-            stdio: "inherit"
-        }
-    );
-
-
-    // --------------------------------------------------
-    // 11. Commit
-    // --------------------------------------------------
-
-    execFileSync(
-        "git",
-        [
-            "-C",
-            repoAPath,
-            "commit",
-            "-m",
-            `Update ${dependencyName} to ${repoBVersion}`
-        ],
-        {
-            stdio: "inherit"
-        }
-    );
-
-
-    console.log("Changes committed.");
-
-
-    // --------------------------------------------------
-    // 12. Push branch
-    // --------------------------------------------------
-
-    console.log("Pushing branch...");
-
-
-    execFileSync(
-        "git",
-        [
-            "-C",
-            repoAPath,
-
-            "-c",
-            `http.extraheader=AUTHORIZATION: bearer ${token}`,
-
-            "push",
-            "-u",
-            "origin",
-            branchName
-        ],
-        {
-            stdio: "inherit"
-        }
-    );
-
-
-    console.log("Branch pushed successfully.");
-
-
-    // --------------------------------------------------
-    // 13. Create Pull Request
-    // --------------------------------------------------
-
-    await CreatePullRequest(
-        owner,
-        repoAName,
-        branchName,
-        repoBVersion
-    );
-
-    console.log("Version update process completed.");
+    }
 }
 
-// --------------------------------------------------
-// Run
-// --------------------------------------------------
 
 main().catch(error => {
 
     console.error(error);
 
     process.exit(1);
+
 });
