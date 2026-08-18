@@ -2,10 +2,34 @@ const fs = require("fs");
 const path = require("path");
 const { execSync } = require("child_process");
 
+
+// ===============================
+// Configuration
+// ===============================
+
 const owner = "Utkarshnegi2k5";
 
+const repoAName = "Repo-A";
+const repoBName = "Repo-B";
+
+const repoAPath = "Repo-A";
+
+const repoApackagePath = "package.json";
+const repoBpackagePath = "package.json";
+
+const dependencyName = "repo-b";
+
+const branchPrefix = "update-repo-b";
+
+
+// ===============================
+// GitHub API
+// ===============================
+
 async function GetFileFromGithub(owner, repo, filePath) {
-    const url = `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`;
+
+    const url =
+        `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`;
 
     const response = await fetch(url, {
         headers: {
@@ -30,74 +54,111 @@ async function GetFileFromGithub(owner, repo, filePath) {
 }
 
 
+// ===============================
+// Main
+// ===============================
+
 async function main() {
 
-    const repoApath = "package.json";
-    const repoBpath = "package.json";
-
     // Get Repo-A package.json
+
     const repoA = await GetFileFromGithub(
         owner,
-        "Repo-A",
-        repoApath
+        repoAName,
+        repoApackagePath
     );
 
-    console.log("Repo-A package.json:");
+    console.log(`${repoAName} package.json:`);
     console.log(repoA);
 
 
     // Get Repo-B package.json
+
     const repoB = await GetFileFromGithub(
         owner,
-        "Repo-B",
-        repoBpath
+        repoBName,
+        repoBpackagePath
     );
 
-    console.log("Repo-B package.json:");
+    console.log(`${repoBName} package.json:`);
     console.log(repoB);
 
 
     // Version comparison
-    const repoAVersion = repoA.dependencies["repo-b"];
-    const repoBVersion = repoB.version;
 
-    console.log(`Repo-A requires Repo-B: ${repoAVersion}`);
-    console.log(`Repo-B current version: ${repoBVersion}`);
+    const repoAVersion =
+        repoA.dependencies[dependencyName];
 
+    const repoBVersion =
+        repoB.version;
+
+    console.log(
+        `${repoAName} requires ${repoBName}: ${repoAVersion}`
+    );
+
+    console.log(
+        `${repoBName} current version: ${repoBVersion}`
+    );
+
+
+    // Check for mismatch
 
     if (repoAVersion !== repoBVersion) {
 
         console.log("!!! There is a version mismatch !!!");
 
-        // Location of locally cloned Repo-A
+
+        // Location of locally checked out Repo-A
+
         const packagePath = path.join(
-            "Repo-A",
-            "package.json"
+            repoAPath,
+            repoApackagePath
         );
 
-        // Read local Repo-A package.json
+
+        // Read Repo-A package.json
+
         const packageJson = JSON.parse(
             fs.readFileSync(packagePath, "utf8")
         );
 
+
         // Update dependency
-        packageJson.dependencies["repo-b"] = repoBVersion;
+
+        packageJson.dependencies[dependencyName] =
+            repoBVersion;
+
 
         // Write updated package.json
+
         fs.writeFileSync(
             packagePath,
             JSON.stringify(packageJson, null, 2) + "\n"
         );
 
-        const repoAPath = path.join("Repo-A");
 
-        const branchName = `update-repo-b-${repoBVersion}`;
+        // Create branch
 
-        execSync(`git -C "${repoAPath}" checkout -b "${branchName}"`);
+        const branchName =
+            `${branchPrefix}-${repoBVersion}`;
 
-        console.log(`Created branch: ${branchName}`);
+        execSync(
+            `git -C "${repoAPath}" checkout -b "${branchName}"`
+        );
 
-        execSync(`git -C "${repoAPath}" add package.json`);
+        console.log(
+            `Created branch: ${branchName}`
+        );
+
+
+        // Stage changes
+
+        execSync(
+            `git -C "${repoAPath}" add "${repoApackagePath}"`
+        );
+
+
+        // Configure Git user
 
         execSync(
             `git -C "${repoAPath}" config user.name "github-actions[bot]"`
@@ -107,12 +168,19 @@ async function main() {
             `git -C "${repoAPath}" config user.email "41898282+github-actions[bot]@users.noreply.github.com"`
         );
 
-        // Commit the change
+
+        // Commit
+
         execSync(
-            `git -C "${repoAPath}" commit -m "Update repo-b to version ${repoBVersion}"`
+            `git -C "${repoAPath}" commit -m "Update ${dependencyName} to version ${repoBVersion}"`
         );
 
-        console.log(`Committed version update to ${repoBVersion}`);
+        console.log(
+            `Committed version update to ${repoBVersion}`
+        );
+
+
+        // Push branch
 
         execSync(
             `git -C "${repoAPath}" push origin "${branchName}"`,
@@ -121,12 +189,18 @@ async function main() {
             }
         );
 
-console.log(`Pushed branch ${branchName} to Repo-A`);
+        console.log(
+            `Pushed branch ${branchName} to ${repoAName}`
+        );
+
 
     } else {
 
-        console.log("There is no version mismatch");
+        console.log(
+            "There is no version mismatch"
+        );
 
     }
 }
+
 main();
