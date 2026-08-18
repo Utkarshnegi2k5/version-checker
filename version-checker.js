@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+const { execSync } = require("child_process");
 
 const owner = "Utkarshnegi2k5";
 
@@ -96,6 +97,14 @@ async function main() {
         execSync(`git -C "${repoAPath}" checkout -b "${branchName}"`);
 
         console.log(`Created branch: ${branchName}`);
+
+        execSync(`git -C "${repoAPath}" add package.json`);
+
+        execSync(
+            `git -C "${repoAPath}" commit -m "Update repo-b to ${repoBVersion}"`
+        );
+
+        console.log("Changes committed successfully");
 
     } else {
 
