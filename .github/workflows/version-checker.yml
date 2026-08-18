@@ -18,7 +18,7 @@ jobs:
         with:
           repository: Utkarshnegi2k5/Repo-A
           token: ${{ secrets.VERSION_TOKEN }}
-          path: ../Repo-A
+          path: Repo-A
 
       - name: Setup NodeJs
         uses: actions/setup-node@v4
