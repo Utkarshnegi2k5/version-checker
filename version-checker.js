@@ -89,9 +89,13 @@ async function main() {
             JSON.stringify(packageJson, null, 2) + "\n"
         );
 
-        console.log(
-            `Updated Repo-B dependency from ${repoAVersion} to ${repoBVersion}`
-        );
+        const repoAPath = path.join("..", "Repo-A");
+
+        const branchName = `update-repo-b-${repoBVersion}`;
+
+        execSync(`git -C "${repoAPath}" checkout -b "${branchName}"`);
+
+        console.log(`Created branch: ${branchName}`);
 
     } else {
 
