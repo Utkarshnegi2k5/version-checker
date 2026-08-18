@@ -53,7 +53,6 @@ async function GetFileFromGithub(owner, repo, filePath) {
     return JSON.parse(content);
 }
 
-
 // ===============================
 // Create Pull Request
 // ===============================
