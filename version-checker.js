@@ -99,6 +99,14 @@ async function main() {
 
         execSync(`git -C "${repoAPath}" add package.json`);
 
+        execSync(
+            `git -C "${repoAPath}" config user.name "github-actions[bot]"`
+        );
+
+        execSync(
+            `git -C "${repoAPath}" config user.email "41898282+github-actions[bot]@users.noreply.github.com"`
+        );
+
         // Commit the change
         execSync(
             `git -C "${repoAPath}" commit -m "Update repo-b to version ${repoBVersion}"`
