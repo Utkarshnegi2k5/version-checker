@@ -27,6 +27,6 @@ jobs:
 
       - name: Run version checker
         env:
-          GITHUB_TOKEN: ${{secrets.VERSION_TOKEN}}
+          VERSION_TOKEN: ${{secrets.VERSION_TOKEN}}
         
         run: node version-checker.js

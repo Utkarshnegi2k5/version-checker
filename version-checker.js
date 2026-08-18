@@ -35,9 +35,7 @@ async function main() {
     const repoApath = "package.json";
     const repoBpath = "package.json";
 
-
     // Get Repo-A package.json
-
     const repoA = await GetFileFromGithub(
         owner,
         "Repo-A",
@@ -49,7 +47,6 @@ async function main() {
 
 
     // Get Repo-B package.json
-
     const repoB = await GetFileFromGithub(
         owner,
         "Repo-B",
@@ -61,7 +58,6 @@ async function main() {
 
 
     // Version comparison
-
     const repoAVersion = repoA.dependencies["repo-b"];
     const repoBVersion = repoB.version;
 
@@ -69,71 +65,46 @@ async function main() {
     console.log(`Repo-B current version: ${repoBVersion}`);
 
 
-    // Check version mismatch
-
     if (repoAVersion !== repoBVersion) {
 
         console.log("!!! There is a version mismatch !!!");
 
-
-        // Repo-A location on GitHub Actions runner
-
-        const repoAPath = path.join(
-            process.cwd(),
-            "..",
-            "Repo-A"
-        );
-
-
-        // package.json inside Repo-A
-
+        // Location of locally cloned Repo-A
         const packagePath = path.join(
-            repoAPath,
+            "Repo-A",
             "package.json"
         );
 
-
-        // Read Repo-A package.json
-
+        // Read local Repo-A package.json
         const packageJson = JSON.parse(
             fs.readFileSync(packagePath, "utf8")
         );
 
-
         // Update dependency
-
         packageJson.dependencies["repo-b"] = repoBVersion;
 
-
         // Write updated package.json
-
         fs.writeFileSync(
             packagePath,
             JSON.stringify(packageJson, null, 2) + "\n"
         );
 
-        console.log(
-            `Updated repo-b from ${repoAVersion} to ${repoBVersion}`
-        );
+        const repoAPath = path.join("Repo-A");
 
+        const branchName = `update-repo-b-${repoBVersion}`;
 
-        // Create branch
+        execSync(`git -C "${repoAPath}" checkout -b "${branchName}"`);
 
-        const branchName =
-            `update-repo-b-${repoBVersion}`;
+        console.log(`Created branch: ${branchName}`);
 
+        execSync(`git -C "${repoAPath}" add package.json`);
 
+        // Commit the change
         execSync(
-            `git -C "${repoAPath}" checkout -b "${branchName}"`,
-            {
-                stdio: "inherit"
-            }
+            `git -C "${repoAPath}" commit -m "Update repo-b to version ${repoBVersion}"`
         );
 
-        console.log(
-            `Created branch: ${branchName}`
-        );
-
+        console.log(`Committed version update to ${repoBVersion}`);
 
     } else {
 
@@ -142,11 +113,4 @@ async function main() {
     }
 }
 
-
-main().catch(error => {
-
-    console.error(error);
-
-    process.exit(1);
-
-});
+main();
