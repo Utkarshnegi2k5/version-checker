@@ -114,6 +114,15 @@ async function main() {
 
         console.log(`Committed version update to ${repoBVersion}`);
 
+        execSync(
+            `git -C "${repoAPath}" push origin "${branchName}"`,
+            {
+                stdio: "inherit"
+            }
+        );
+
+console.log(`Pushed branch ${branchName} to Repo-A`);
+
     } else {
 
         console.log("There is no version mismatch");
