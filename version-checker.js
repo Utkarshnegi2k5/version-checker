@@ -193,6 +193,23 @@ async function main() {
             `Pushed branch ${branchName} to ${repoAName}`
         );
 
+        const pullRequest = await CreatePullRequest(
+            owner,
+            repoAName,
+            branchName,
+            "main",
+            `Update ${dependencyName} to version ${repoBVersion}`,
+            `Automated dependency update.
+
+        ${dependencyName} was updated from ${repoAVersion} to ${repoBVersion}.
+
+        This pull request was created automatically by the version checker.`
+        );
+
+        
+        console.log(
+            `Pull Request created: ${pullRequest.html_url}`
+        );
 
     } else {
 
