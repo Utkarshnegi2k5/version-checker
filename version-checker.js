@@ -1,9 +1,14 @@
-async function GetFileFromGithub(owner, repo, path) {
-    const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+const fs = require("fs");
+const path = require("path");
+
+const owner = "Utkarshnegi2k5";
+
+async function GetFileFromGithub(owner, repo, filePath) {
+    const url = `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`;
 
     const response = await fetch(url, {
         headers: {
-            Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
+            Authorization: `Bearer ${process.env.VERSION_TOKEN}`,
             Accept: "application/vnd.github+json"
         }
     });
@@ -16,40 +21,83 @@ async function GetFileFromGithub(owner, repo, path) {
 
     const data = await response.json();
 
-    const content = Buffer.from(data.content, "base64").toString("utf8");
+    const content = Buffer
+        .from(data.content, "base64")
+        .toString("utf8");
 
     return JSON.parse(content);
 }
 
+
 async function main() {
-    const owner = "Utkarshnegi2k5";
+
     const repoApath = "package.json";
     const repoBpath = "package.json";
 
+    // Get Repo-A package.json
     const repoA = await GetFileFromGithub(
-        owner,  
-        "Repo-A",           //repo variable 
-        repoApath           //path variable 
+        owner,
+        "Repo-A",
+        repoApath
     );
 
+    console.log("Repo-A package.json:");
     console.log(repoA);
 
+
+    // Get Repo-B package.json
     const repoB = await GetFileFromGithub(
-        owner,  
-        "Repo-B",           //repo variable 
-        repoBpath           //path variable 
+        owner,
+        "Repo-B",
+        repoBpath
     );
 
+    console.log("Repo-B package.json:");
     console.log(repoB);
 
-    if(repoA.dependencies["repo-b"] !== repoB.version)
-    {
-        console.log("!!! There is a version mismatch !!!")
-    }
-    else
-    {
-        console.log("There is no version mismatch")
+
+    // Version comparison
+    const repoAVersion = repoA.dependencies["repo-b"];
+    const repoBVersion = repoB.version;
+
+    console.log(`Repo-A requires Repo-B: ${repoAVersion}`);
+    console.log(`Repo-B current version: ${repoBVersion}`);
+
+
+    if (repoAVersion !== repoBVersion) {
+
+        console.log("!!! There is a version mismatch !!!");
+
+        // Location of locally cloned Repo-A
+        const packagePath = path.join(
+            "..",
+            "Repo-A",
+            "package.json"
+        );
+
+        // Read local Repo-A package.json
+        const packageJson = JSON.parse(
+            fs.readFileSync(packagePath, "utf8")
+        );
+
+        // Update dependency
+        packageJson.dependencies["repo-b"] = repoBVersion;
+
+        // Write updated package.json
+        fs.writeFileSync(
+            packagePath,
+            JSON.stringify(packageJson, null, 2) + "\n"
+        );
+
+        console.log(
+            `Updated Repo-B dependency from ${repoAVersion} to ${repoBVersion}`
+        );
+
+    } else {
+
+        console.log("There is no version mismatch");
+
     }
 }
 
-main().catch(console.error);
+main();
