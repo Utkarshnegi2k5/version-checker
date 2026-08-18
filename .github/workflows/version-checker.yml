@@ -1,8 +1,9 @@
 name: Version checker
 
 on:
-  schedule:
-    - cron: '*/5 * * * *'
+  push:
+    branches:
+      - main
 
 jobs:
   check-version:
@@ -19,6 +20,6 @@ jobs:
 
       - name: Run version checker
         env:
-          GITHUB_TOKEN: ${{secrets.VERSION_TOKEN}}
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
         
         run: node version-checker.js
