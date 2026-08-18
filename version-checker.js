@@ -55,6 +55,51 @@ async function GetFileFromGithub(owner, repo, filePath) {
 
 
 // ===============================
+// Create Pull Request
+// ===============================
+
+async function CreatePullRequest(
+    owner,
+    repo,
+    branchName,
+    baseBranch,
+    title,
+    body
+) {
+
+    const url =
+        `https://api.github.com/repos/${owner}/${repo}/pulls`;
+
+    const response = await fetch(url, {
+        method: "POST",
+
+        headers: {
+            Authorization: `Bearer ${process.env.VERSION_TOKEN}`,
+            Accept: "application/vnd.github+json",
+            "Content-Type": "application/json"
+        },
+
+        body: JSON.stringify({
+            title: title,
+            body: body,
+            head: branchName,
+            base: baseBranch
+        })
+    });
+
+    if (!response.ok) {
+
+        const error = await response.text();
+
+        throw new Error(
+            `GitHub PR creation failed: ${response.status} ${error}`
+        );
+    }
+
+    return await response.json();
+}
+
+// ===============================
 // Main
 // ===============================
 
@@ -206,7 +251,7 @@ async function main() {
         This pull request was created automatically by the version checker.`
         );
 
-        
+
         console.log(
             `Pull Request created: ${pullRequest.html_url}`
         );
