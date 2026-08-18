@@ -2,9 +2,7 @@ name: Version checker
 
 on:
   schedule:
-    - cron: '40/5 * * * *'
-      timezone: "Asia/Kolkata"
-  workflow_dispatch:
+    - cron: '* * * * *'
 
 
 jobs:
