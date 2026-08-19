@@ -1,33 +1,61 @@
-name: Version checker
+name: Version Checker
 
 on:
   push:
     branches:
       - main
 
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   check-version:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repo
+
+      # Checkout version-checker repository
+      - name: Checkout Version Checker
         uses: actions/checkout@v4
 
+      # Checkout Repo-A
       - name: Checkout Repo-A
         uses: actions/checkout@v4
         with:
           repository: Utkarshnegi2k5/Repo-A
           token: ${{ secrets.VERSION_TOKEN }}
           path: Repo-A
+          fetch-depth: 0
 
-      - name: Setup NodeJs
+      # Checkout Repo-B
+      - name: Checkout Repo-B
+        uses: actions/checkout@v4
+        with:
+          repository: Utkarshnegi2k5/Repo-B
+          token: ${{ secrets.VERSION_TOKEN }}
+          path: Repo-B
+          fetch-depth: 0
+
+      # Checkout Repo-C
+      - name: Checkout Repo-C
+        uses: actions/checkout@v4
+        with:
+          repository: Utkarshnegi2k5/Repo-C
+          token: ${{ secrets.VERSION_TOKEN }}
+          path: Repo-C
+          fetch-depth: 0
+
+      # Setup Node
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 24
 
-      - name: Run version checker
+      # Run version checker
+      - name: Run Version Checker
         env:
-          VERSION_TOKEN: ${{secrets.VERSION_TOKEN}}
-        
-          
+          VERSION_TOKEN: ${{ secrets.VERSION_TOKEN }}
         run: node version-checker.js
