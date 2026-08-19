@@ -165,7 +165,7 @@ async function main() {
     }
 
     // =================================
-    // Phase 2: Build dependency map
+    // Build dependency map
     // =================================
 
     const dependencyMap = {};
@@ -315,8 +315,8 @@ async function main() {
                 `${mismatch.actualVersion}`
             );
         }
-                // =================================
-            // Phase 4: Process mismatches
+            // =================================
+            // Process mismatches
             // =================================
 
             for (const mismatch of versionMismatches) {
@@ -344,7 +344,7 @@ async function main() {
 
 
                 // =================================
-                // Local Repo-A path
+                // Repo-A path
                 // =================================
 
                 const repositoryPath =
@@ -481,11 +481,11 @@ async function main() {
 
                         `Automated dependency update.
 
-    ${dependencyRepository} was updated from ${oldVersion} to ${newVersion}.
+                        ${dependencyRepository} was updated from ${oldVersion} to ${newVersion}.
 
-    Dependent repository: ${dependentRepository}
+                        Dependent repository: ${dependentRepository}
 
-    This pull request was created automatically by the version checker.`
+                        This pull request was created automatically by the version checker.`
                     );
 
 
