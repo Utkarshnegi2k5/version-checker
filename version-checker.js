@@ -23,7 +23,6 @@ const packagePath = "package.json";
 // ===============================
 
 async function GetFileFromGithub(owner, repo, filePath) {
-
     const url =
         `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`;
 
